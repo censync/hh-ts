@@ -1,0 +1,39 @@
+# EditorConfig: https://editorconfig.org/
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{ts,mjs}]
+max_line_length = 120
+
+[*.sh]
+indent_size = 4
+
+# Two trailing spaces are a hard line break in Markdown.
+[*.md]
+max_line_length = 100
+trim_trailing_whitespace = false
+
+# Golden vectors are tab-separated and copied byte for byte from hh-cpp.
+[testdata/**]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = false
+insert_final_newline = unset
+
+# The hand-made cases of the differential test are bytes: tabs, trailing blanks, a CR, bytes that
+# are not UTF-8, and no newline at the end.
+[tools/edge-cases.txt]
+charset = unset
+end_of_line = unset
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = false
+insert_final_newline = false

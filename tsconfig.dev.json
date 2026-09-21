@@ -1,0 +1,11 @@
+{
+  // Tests, the command line tool and the benchmark: Node.js programs that are never published.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "build",
+    "types": ["node"],
+    "sourceMap": true
+  },
+  "include": ["src", "test", "cli", "bench"]
+}

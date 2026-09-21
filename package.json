@@ -1,0 +1,62 @@
+{
+  "name": "@censync/hh",
+  "version": "1.0.0",
+  "description": "Humanized Hash: a small deterministic picture of a blockchain address, a public key or a hash, made to catch address poisoning and clipboard substitution",
+  "keywords": [
+    "humanized-hash",
+    "visual-hash",
+    "identicon",
+    "fingerprint",
+    "address-poisoning",
+    "blockchain",
+    "wallet",
+    "hmac",
+    "png",
+    "zero-dependency"
+  ],
+  "license": "MIT",
+  "author": "Dmitry Mandrika (https://censync.com)",
+  "homepage": "https://github.com/censync/hh-ts#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/censync/hh-ts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/censync/hh-ts/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "clean": "node tools/clean.mjs",
+    "build": "tsc -p tsconfig.json",
+    "build:dev": "tsc -p tsconfig.dev.json",
+    "test": "npm run build && npm run build:dev && node --test build/test/sha256.test.js build/test/hmac.test.js build/test/pbkdf2.test.js build/test/utf8.test.js build/test/int.test.js build/test/vectors.test.js build/test/api.test.js build/test/order.test.js build/test/raster.test.js build/test/encoders.test.js build/test/robustness.test.js build/test/sources.test.js build/test/package.test.js",
+    "bench": "npm run build:dev && node build/bench/bench.js",
+    "prepack": "npm run clean && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.43",
+    "typescript": "6.0.3"
+  }
+}

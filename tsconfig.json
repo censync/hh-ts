@@ -1,0 +1,15 @@
+{
+  // The published library. "lib" and "types" keep every platform API out of reach: no Node
+  // modules, no DOM, no TextEncoder, no WebCrypto. Code that needs one does not compile.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "types": [],
+    "declaration": true,
+    "sourceMap": true,
+    "inlineSources": true,
+    "stripInternal": true
+  },
+  "include": ["src"]
+}

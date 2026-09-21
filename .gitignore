@@ -1,0 +1,12 @@
+# Dependencies and build products
+node_modules/
+dist/
+build/
+*.tgz
+*.tsbuildinfo
+
+# Editors and local tooling
+.idea/
+.vscode/
+*.swp
+.DS_Store

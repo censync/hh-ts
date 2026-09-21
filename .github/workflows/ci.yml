@@ -1,0 +1,77 @@
+name: ci
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: ["20", "22", "24"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - name: Install the pinned toolchain
+        run: npm ci
+      - name: Build and test
+        run: npm test
+      - name: The package holds what it should
+        run: npm pack --dry-run
+
+  # testdata/ must be the vectors of the hh-cpp release that testdata/SOURCE names.
+  provenance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Read testdata/SOURCE
+        id: source
+        run: |
+          echo "tag=$(sed -n 's/^tag: //p' testdata/SOURCE)" >> "$GITHUB_OUTPUT"
+          echo "commit=$(sed -n 's/^commit: //p' testdata/SOURCE)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7
+        with:
+          repository: censync/hh-cpp
+          ref: ${{ steps.source.outputs.tag }}
+          path: hh-cpp
+      - name: The tag is the recorded commit
+        run: test "$(git -C hh-cpp rev-parse HEAD)" = "${{ steps.source.outputs.commit }}"
+      - name: The copy is byte-identical
+        run: |
+          diff -r -x SOURCE hh-cpp/testdata testdata
+          (cd testdata && grep -E '^[0-9a-f]{64}  ' SOURCE | sha256sum --check --quiet)
+
+  # Pseudo-random cases beyond the vector set, against hh_cli built from the same release.
+  differential:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - name: Read testdata/SOURCE
+        id: source
+        run: |
+          echo "tag=$(sed -n 's/^tag: //p' testdata/SOURCE)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7
+        with:
+          repository: censync/hh-cpp
+          ref: ${{ steps.source.outputs.tag }}
+          path: hh-cpp
+      - name: Build hh_cli
+        run: |
+          cmake -S hh-cpp -B hh-cpp/build -DCMAKE_BUILD_TYPE=Release -DHH_BUILD_TESTS=OFF
+          cmake --build hh-cpp/build --parallel --target hh_cli
+      - name: Crosscheck
+        run: |
+          tools/crosscheck.sh hh-cpp/build/examples/hh_cli 2000 1
+          tools/crosscheck.sh hh-cpp/build/examples/hh_cli 2000 2
