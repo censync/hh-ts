@@ -114,6 +114,33 @@ and Web Worker recipes and for keyed mode in a web application, and
 [SECURITY.md](https://github.com/censync/hh-cpp/blob/v1.0.0/docs/SECURITY.md) of hh-cpp for what
 a picture proves and what it does not.
 
+## A complete program
+
+A Node.js program that writes the picture of an address to a PNG file and prints its tag.
+
+```sh
+mkdir hh-example && cd hh-example
+npm init -y
+npm install @censync/hh
+```
+
+`main.mjs`:
+
+```js
+import { writeFileSync } from "node:fs";
+import { BaseDigest, Fingerprint } from "@censync/hh";
+
+const digest = BaseDigest.ofHex("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed");
+const fingerprint = Fingerprint.universal(digest);
+writeFileSync("address.png", fingerprint.render(128).encodePng());
+const tag = fingerprint.tag;
+console.log(`${tag.slice(0, 3)}-${tag.slice(3)}`);
+```
+
+`node main.mjs` prints `TKS-PVH` and writes `address.png`, byte for byte the file
+`testdata/golden/evm-1-universal-128.png` that every implementation reproduces. Saved as
+`main.mts`, the same code is TypeScript: the package carries its type declarations.
+
 ## Building
 
 Node.js 20 or newer. The toolchain is the TypeScript compiler and the type declarations of
