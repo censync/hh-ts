@@ -15,7 +15,11 @@ import type { FrameStyle, Shape } from "./model.js";
 export interface RenderOptions {
   /** Square (the default) or round. */
   readonly shape?: Shape | undefined;
-  /** The frame style; the default is `automatic`. */
+  /**
+   * The frame style; the default is `automatic`. Every style works in either mode if it fits the shape:
+   * `none`, `plain`, `double` and `thick` fit both, `rounded`, `chamfered` and `brackets` the square, `ticks`
+   * and `gaps` the round shape. A style that does not fit the shape is `invalid_frame`.
+   */
   readonly frame?: FrameStyle | undefined;
   /** The background colour as `0xRRGGBB`; the default is `0xFFFFFF`. */
   readonly backgroundRgb?: number | undefined;

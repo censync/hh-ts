@@ -1,6 +1,6 @@
 {
   "name": "@censync/hh",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Humanized Hash: a small deterministic picture of a blockchain address, a public key or a hash, made to catch address poisoning and clipboard substitution",
   "keywords": [
     "humanized-hash",

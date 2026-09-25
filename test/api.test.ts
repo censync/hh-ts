@@ -235,7 +235,7 @@ test("digests and fingerprints cannot be changed", () => {
   }, TypeError);
   assert.equal(fp.mode, "universal");
   assert.equal(fp.tag, "TKSPVH");
-  assert.equal(error(() => fp.render(32, { frame: "rounded" })), "invalid_frame"); // still universal
+  assert.deepEqual(fp.render(32).rgba, before); // still universal: automatic draws no frame
   assert.deepEqual(fp.render(32, { frame: "none" }).rgba, before);
   // The bytes are not a property: nothing prints them and nothing reaches them but toBytes(), a copy.
   assert.equal((fp as unknown as { bytes?: unknown }).bytes, undefined);

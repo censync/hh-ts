@@ -2,7 +2,7 @@
 
 How to put `@censync/hh` into an application. What to hash, which mode to show where and how
 large a picture must be are the same for every implementation and are described once, in
-[INTEGRATION.md of hh-cpp](https://github.com/censync/hh-cpp/blob/v1.0.0/docs/INTEGRATION.md)
+[INTEGRATION.md of hh-cpp](https://github.com/censync/hh-cpp/blob/v1.1.0/docs/INTEGRATION.md)
 (sections 1 to 4: recommended inputs per chain, the product rules, the looks). This document adds
 the JavaScript side.
 
@@ -262,7 +262,7 @@ import { measureContrast, type RenderOptions } from "@censync/hh";
 
 const options: RenderOptions = {
   shape: "round",
-  frame: "double", // a keyed-mode marker: refused for a universal fingerprint
+  frame: "double", // any style of the shape, in either mode
   backgroundRgb: 0x121212,
   backgroundAlpha: 255,
   frameAlpha: 255,
@@ -275,8 +275,12 @@ if (report.figuresX100 < 300) {
 
 Every option has a default: a square picture on opaque white, with the `automatic` frame, which
 is `rounded` for a keyed fingerprint with the square shape and `none` otherwise: a universal
-picture has no frame, and neither has a round one. A round keyed picture carries a keyed-mode
-marker only when one is asked for: `double`, `thick`, `ticks` or `gaps`.
+picture has no frame, and neither has a round one. Every style is open to both modes: `none`,
+`plain`, `double` and `thick` fit either shape, `rounded`, `chamfered` and `brackets` the square,
+`ticks` and `gaps` the round shape; a style that does not fit the shape is `invalid_frame`. A host
+that marks its keyed pictures with a frame uses one style everywhere in the application and on
+every device of a user: a marker is only useful if it is familiar. The library does not enforce
+the marker, so the caption, not the frame, is what tells the user the mode.
 
 An options object with a property that is not an option, such as the misspelt `backgroundRGB`, is
 refused with `invalid_argument` by `render`, `renderOrNull` (which returns `null`) and
@@ -310,7 +314,7 @@ for logs.
 | `SecretKey.of` | `invalid_key` (4) |
 | `Fingerprint.universal`, `keyed` | `invalid_digest` (5), then `invalid_key` (4), also for a closed key |
 | `Fingerprint.fromBytes` | `invalid_fingerprint` (6): not 32 bytes, or an unknown mode |
-| `Fingerprint.render` | `invalid_argument` (14) for a property that is not an option or a value that is unknown or out of range, then `invalid_size` (7), `invalid_frame` (8), `low_contrast` (9), `invalid_size` (7) if no cell fits |
+| `Fingerprint.render` | `invalid_argument` (14) for a property that is not an option or a value that is unknown or out of range, then `invalid_size` (7), `invalid_frame` (8) if the frame style does not fit the shape, `low_contrast` (9), `invalid_size` (7) if no cell fits |
 | `HhImage.ofRgba` | `invalid_image` (11) |
 | `HhImage.encodePng` | `invalid_image` (11) if the pixel buffer was detached |
 | `HhImage.encodeBmp` | `invalid_image` (11) if the pixel buffer was detached, then `invalid_argument` (14) for the matte |

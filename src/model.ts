@@ -19,7 +19,10 @@ export const SHAPES = Object.freeze(["square", "round"] as const);
  */
 export type Shape = (typeof SHAPES)[number];
 
-/** The frame styles, spelled as in section 6 of the specification. */
+/**
+ * The frame styles, spelled as in section 6 of the specification. Every style is available in both modes;
+ * {@link FrameStyle} says which shape each one fits.
+ */
 export const FRAME_STYLES = Object.freeze([
   "automatic",
   "none",
@@ -34,9 +37,10 @@ export const FRAME_STYLES = Object.freeze([
 ] as const);
 
 /**
- * The frame of a picture. `none` and `plain` are open to both modes. Every other style is a keyed-mode
- * marker: it tells the user that the picture is the private one, and rendering refuses it for a universal
- * fingerprint.
+ * The frame of a picture. Every style is available to universal and keyed fingerprints alike; `rounded`,
+ * `chamfered` and `brackets` need the square shape, `ticks` and `gaps` the round one, and rendering refuses
+ * a style that does not fit the shape with `invalid_frame`. A host that marks its keyed pictures with a
+ * frame picks the style; `automatic` gives keyed square pictures rounded corners.
  *
  * - `automatic`: `rounded` for a keyed fingerprint with the square shape, otherwise `none`
  * - `none`: no frame

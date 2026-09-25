@@ -62,22 +62,21 @@ export function resolveFrame(frame: FrameStyle, mode: Mode, shape: Shape): Frame
   return mode === "keyed" && shape === "square" ? "rounded" : "none";
 }
 
-/** The table of section 6: which resolved style goes with which shape and mode. */
-export function frameAllowed(resolved: FrameStyle, mode: Mode, shape: Shape): boolean {
+/** The table of section 6: which resolved style goes with which shape. The mode plays no part. */
+export function frameAllowed(resolved: FrameStyle, shape: Shape): boolean {
   switch (resolved) {
     case "none":
     case "plain":
+    case "double":
+    case "thick":
       return true;
     case "rounded":
     case "chamfered":
     case "brackets":
-      return mode === "keyed" && shape === "square";
-    case "double":
-    case "thick":
-      return mode === "keyed";
+      return shape === "square";
     case "ticks":
     case "gaps":
-      return mode === "keyed" && shape === "round";
+      return shape === "round";
     case "automatic":
       return false;
   }
@@ -370,11 +369,8 @@ export function render(
     throw new HhError(HhErrorCode.INVALID_SIZE, `the size is an integer ${MIN_SIZE}..${MAX_SIZE}`);
   }
   const frame = resolveFrame(o.frame, mode, o.shape);
-  if (!frameAllowed(frame, mode, o.shape)) {
-    throw new HhError(
-      HhErrorCode.INVALID_FRAME,
-      `the frame ${frame} is not allowed for a ${mode} fingerprint with the ${o.shape} shape`,
-    );
+  if (!frameAllowed(frame, o.shape)) {
+    throw new HhError(HhErrorCode.INVALID_FRAME, `the frame ${frame} does not fit the ${o.shape} shape`);
   }
   if (o.backgroundAlpha === 255 && figuresX100(o.backgroundRgb) < 200) {
     throw new HhError(HhErrorCode.LOW_CONTRAST, "the background is too close to a palette colour");

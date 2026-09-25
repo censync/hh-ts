@@ -332,13 +332,10 @@ function generate(count: number, seed: number): void {
     const size = [15, 1025, 1024, 16][random.below(30)] ?? 17 + random.below(240);
     const background = random.chance(3) ? random.hex(4) : random.pick(backgrounds);
     const round = random.chance(2);
-    // Mostly a frame that fits the mode and the shape, so that most cases render.
-    const fitting: readonly string[] =
-      key === "-"
-        ? ["automatic", "none", "plain"]
-        : round
-          ? ["automatic", "none", "plain", "double", "thick", "ticks", "gaps"]
-          : ["automatic", "none", "plain", "rounded", "chamfered", "double", "thick", "brackets"];
+    // Mostly a frame that fits the shape, so that most cases render.
+    const fitting: readonly string[] = round
+      ? ["automatic", "none", "plain", "double", "thick", "ticks", "gaps"]
+      : ["automatic", "none", "plain", "rounded", "chamfered", "double", "thick", "brackets"];
     const frame = random.chance(8) ? random.pick(FRAME_STYLES) : random.pick(fitting);
     const format = random.pick(["png", "png", "bmp", "jpeg", "rgba"]);
     const quality = random.chance(12) ? 40 + random.below(70) : 50 + random.below(51);

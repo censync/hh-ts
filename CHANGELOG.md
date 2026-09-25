@@ -6,6 +6,25 @@ All notable changes to this project are documented here. The format follows
 its golden vectors were copied from. The algorithm itself is frozen and has no version: no
 release changes a fingerprint, a pixel or an encoded byte.
 
+## [1.1.0] - 2026-09-25
+
+Golden vectors: hh-cpp v1.1.0.
+
+### Changed
+
+- The mode no longer restricts the look: universal fingerprints take every frame style that fits
+  the shape (`rounded`, `chamfered`, `double`, `thick`, `brackets`, `ticks`, `gaps`), which 1.0.0
+  refused with `invalid_frame`. A style that does not fit the shape is still `invalid_frame`.
+  `automatic` is unchanged: universal pictures stay frameless and keyed square pictures keep
+  their rounded corners, so every picture 1.0.0 rendered is the same to the byte.
+- The TSDoc of `FrameStyle`, `FRAME_STYLES`, `RenderOptions.frame` and
+  `HhErrorCode.INVALID_FRAME`, README.md and `docs/INTEGRATION.md` describe the rule; the message
+  of the `invalid_frame` error names the style and the shape.
+- `testdata/` holds the golden vectors of hh-cpp v1.1.0, which gain renders and size sweeps of
+  universal fingerprints with every style; their error records now test the shape alone.
+- `cli/hh-cli.ts --generate` picks the frame of a case by the shape alone, so the generated cases
+  now include universal pictures with every style.
+
 ## [1.0.0] - 2026-09-21
 
 The first release. Golden vectors: hh-cpp v1.0.0.
@@ -39,4 +58,5 @@ The first release. Golden vectors: hh-cpp v1.0.0.
   carries. `tools/update-vectors.sh` copies the vectors and writes `testdata/SOURCE`.
 - `bench/bench.ts`: timings of the base digest, the renderer and the encoders.
 
+[1.1.0]: https://github.com/censync/hh-ts/releases/tag/v1.1.0
 [1.0.0]: https://github.com/censync/hh-ts/releases/tag/v1.0.0

@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { BaseDigest, FRAME_STYLES, Fingerprint, HhError, HhImage, SecretKey } from "../src/index.js";
-import type { HhErrorName, RenderOptions } from "../src/index.js";
+import type { HhErrorName, RenderOptions, Shape } from "../src/index.js";
 
 function error(block: () => unknown): HhErrorName | "ok" {
   try {
@@ -26,16 +26,19 @@ const LOW: RenderOptions = { backgroundRgb: 0x890af0 };
 
 test("render: the size range comes before the frame and the contrast", () => {
   for (const size of [15, 1025, 0, -128, 64.5, Number.NaN, Number.POSITIVE_INFINITY]) {
-    assert.equal(error(() => universal.render(size, { ...LOW, frame: "rounded" })), "invalid_size", String(size));
+    assert.equal(error(() => universal.render(size, { ...LOW, frame: "ticks" })), "invalid_size", String(size));
   }
   assert.equal(error(() => universal.render("64" as unknown as number)), "invalid_size");
   assert.equal(error(() => universal.render(undefined as unknown as number)), "invalid_size");
 });
 
 test("render: the frame comes before the contrast", () => {
-  assert.equal(error(() => universal.render(64, { ...LOW, frame: "rounded" })), "invalid_frame");
-  assert.equal(error(() => keyed.render(64, { ...LOW, shape: "round", frame: "brackets" })), "invalid_frame");
-  assert.equal(error(() => keyed.render(64, { ...LOW, frame: "ticks" })), "invalid_frame");
+  // In either mode a style that does not fit the shape is refused, and one that fits goes on to the contrast.
+  for (const fp of [universal, keyed]) {
+    assert.equal(error(() => fp.render(64, { ...LOW, frame: "ticks" })), "invalid_frame", fp.mode);
+    assert.equal(error(() => fp.render(64, { ...LOW, shape: "round", frame: "brackets" })), "invalid_frame", fp.mode);
+    assert.equal(error(() => fp.render(64, { ...LOW, frame: "thick" })), "low_contrast", fp.mode);
+  }
   assert.equal(error(() => universal.render(64, LOW)), "low_contrast");
 });
 
@@ -55,17 +58,16 @@ test("render: the contrast rule applies to opaque backgrounds only", () => {
   assert.equal(error(() => universal.render(64, { backgroundRgb: 0x121212 })), "ok");
 });
 
-test("render: every frame style against every shape and mode", () => {
-  const allowed: Readonly<Record<string, readonly string[]>> = {
-    "universal square": ["automatic", "none", "plain"],
-    "universal round": ["automatic", "none", "plain"],
-    "keyed square": ["automatic", "none", "plain", "rounded", "chamfered", "double", "thick", "brackets"],
-    "keyed round": ["automatic", "none", "plain", "double", "thick", "ticks", "gaps"],
+test("render: every frame style against every shape, in both modes", () => {
+  // The shape alone decides which styles fit; the mode plays no part.
+  const fitting: Readonly<Record<Shape, readonly string[]>> = {
+    square: ["automatic", "none", "plain", "rounded", "chamfered", "double", "thick", "brackets"],
+    round: ["automatic", "none", "plain", "double", "thick", "ticks", "gaps"],
   };
   for (const fp of [universal, keyed]) {
     for (const shape of ["square", "round"] as const) {
       for (const frame of FRAME_STYLES) {
-        const expected = (allowed[`${fp.mode} ${shape}`] as readonly string[]).includes(frame) ? "ok" : "invalid_frame";
+        const expected = fitting[shape].includes(frame) ? "ok" : "invalid_frame";
         assert.equal(error(() => fp.render(48, { shape, frame })), expected, `${fp.mode} ${shape} ${frame}`);
       }
     }
@@ -76,6 +78,28 @@ test("render: automatic is rounded for keyed and square, otherwise none", () => 
   assert.deepEqual(keyed.render(48).rgba, keyed.render(48, { frame: "rounded" }).rgba);
   assert.deepEqual(keyed.render(48, { shape: "round" }).rgba, keyed.render(48, { shape: "round", frame: "none" }).rgba);
   assert.deepEqual(universal.render(48).rgba, universal.render(48, { frame: "none" }).rgba);
+});
+
+test("render: an explicit frame draws the same for both modes", () => {
+  // The frame depends on the style and the shape alone: two fingerprints with the same bytes and different
+  // modes give identical pictures for every explicit style.
+  let rendered = 0;
+  for (const shape of ["square", "round"] as const) {
+    for (const frame of FRAME_STYLES.filter((style) => style !== "automatic")) {
+      const options: RenderOptions = { shape, frame };
+      const name = `${shape} ${frame}`;
+      assert.equal(error(() => universal.render(80, options)), error(() => keyed.render(80, options)), name);
+      const a = universal.renderOrNull(80, options);
+      const b = keyed.renderOrNull(80, options);
+      assert.deepEqual(a?.rgba, b?.rgba, name);
+      rendered += a === null ? 0 : 1;
+    }
+  }
+  assert.equal(rendered, 13); // seven styles of the square, six of the round shape
+  // Only automatic depends on the mode: keyed square pictures get rounded corners.
+  const keyedAutomatic = keyed.render(80, { shape: "square", frame: "automatic" }).rgba;
+  assert.deepEqual(universal.render(80, { shape: "square", frame: "rounded" }).rgba, keyedAutomatic);
+  assert.notDeepEqual(universal.render(80).rgba, keyedAutomatic);
 });
 
 test("render: invalid options come before everything else", () => {

@@ -29,4 +29,4 @@ export type { ContrastReport, RenderOptions } from "./options.js";
 export { SecretKey } from "./secret-key.js";
 
 /** The version of this library. It never affects the output: the algorithm has no version. */
-export const VERSION = "1.0.0";
+export const VERSION = "1.1.0";
