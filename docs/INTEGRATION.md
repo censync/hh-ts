@@ -46,6 +46,76 @@ const image = fingerprint.render(sizePx, options); // fast
   takes a text that is already encoded. A text with an unpaired surrogate has no UTF-8 encoding
   and is refused with `invalid_argument` instead of being repaired.
 
+### Addresses that are text
+
+The table of hh-cpp's INTEGRATION.md asks for bytes wherever one address has several spellings.
+The functions below turn the usual spellings into those bytes. They check the form and the
+checksum, not whether the address exists or whose it is, and they are not part of the library,
+which takes any bytes and any text: copy them into the application.
+
+- TON: every spelling of one account (bounceable `EQ...`, non-bounceable `UQ...`, base64 or
+  base64url, raw `0:...`) gives the same 36 bytes and so the same picture. Hashed as text, the
+  four spellings would give four unrelated pictures.
+- Bitcoin: a bech32 address may be written in capitals, as QR codes do; both spellings give one
+  picture. Base58 addresses are case-sensitive and pass unchanged.
+- Free text (a name, an e-mail address, a label a person types) is hashed exactly as given, so
+  case, spaces and the Unicode form all count: an accented letter typed as one character (U+00E9)
+  and as a letter and a combining accent (U+0065 U+0301) gives two different pictures. Normalise
+  text a person types to NFC first; what to do about case and spaces is the application's choice.
+
+```ts
+/**
+ * TON: the canonical 36 bytes (the workchain as 4 bytes big-endian, then the 32-byte account
+ * hash) from a user-friendly address (48 characters of base64 or base64url, any flags) or a raw one
+ * ("0:" or "-1:" and 64 hex digits). `null` for anything else or for a wrong checksum.
+ */
+export function tonAddressBytes(text: string): Uint8Array | null {
+  const out = new Uint8Array(36);
+  const raw = /^(0|-1):([0-9a-fA-F]{64})$/.exec(text);
+  if (raw) {
+    new DataView(out.buffer).setInt32(0, Number(raw[1]));
+    for (let i = 0; i < 32; i++) out[4 + i] = parseInt(raw[2]!.slice(2 * i, 2 * i + 2), 16);
+    return out;
+  }
+  if (!/^[A-Za-z0-9+/_-]{48}$/.test(text)) return null;
+  const bytes = Uint8Array.from(atob(text.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+  let crc = 0; // CRC-16/XMODEM over flags, workchain and hash
+  for (let i = 0; i < 34; i++) {
+    crc ^= bytes[i]! << 8;
+    for (let k = 0; k < 8; k++) crc = (crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1) & 0xffff;
+  }
+  if (crc !== ((bytes[34]! << 8) | bytes[35]!)) return null;
+  new DataView(out.buffer).setInt32(0, (bytes[1]! << 24) >> 24);
+  out.set(bytes.subarray(2, 34), 4);
+  return out;
+}
+
+/**
+ * Bitcoin: bech32 and bech32m addresses (bc1, tb1, bcrt1) are case-insensitive and are hashed in
+ * lower case; one in mixed case is invalid. Base58 addresses are hashed as they are written.
+ */
+export function bitcoinAddressText(text: string): string | null {
+  const lower = text.toLowerCase();
+  if (!/^(bc1|tb1|bcrt1)/.test(lower)) return text;
+  return text === lower || text === text.toUpperCase() ? lower : null;
+}
+
+/** Text a person typed: one spelling per string, whatever the keyboard produced. */
+export function typedText(text: string): string {
+  return text.normalize("NFC");
+}
+```
+
+```ts
+const tonBytes = tonAddressBytes(tonAddress);
+const tonDigest = tonBytes === null ? null : BaseDigest.of(tonBytes);
+const bitcoinText = bitcoinAddressText(bitcoinAddress);
+const bitcoinDigest = bitcoinText === null ? null : BaseDigest.ofText(bitcoinText);
+const labelDigest = BaseDigest.ofText(typedText(label));
+```
+
+`atob` is there in browsers, Node.js, Deno and Bun.
+
 ## 2. Browsers
 
 The library hands over RGBA bytes with straight alpha, which is exactly what `ImageData` holds.
